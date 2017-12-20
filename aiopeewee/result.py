@@ -47,6 +47,8 @@ class AioQueryResultWrapper(QueryResultWrapper):
         raise NotImplementedError()
 
     async def iterate(self):
+        print('type of self:', self.__class__.__name__)
+        print('type of cursor:', self.cursor.__class__.__name__)
         row = await self.cursor.fetchone()
         if not row:
             self._populated = True

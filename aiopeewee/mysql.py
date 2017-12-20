@@ -1,6 +1,6 @@
 import aiomysql
 
-from peewee import mysql, ImproperlyConfigured
+from peewee import mysql, ImproperlyConfigured, basestring
 from peewee import (MySQLDatabase, IndexMetadata,
                     ColumnMetadata, ForeignKeyMetadata)
 

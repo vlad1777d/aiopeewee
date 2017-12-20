@@ -21,8 +21,15 @@ class AioQuery(Query):
         if convert:
             row = await self.tuples().first()
         else:
-            cursor = await self._execute()
-            row = await cursor.fetchone()
+            if self.database.__class__.__name__ == 'AioSqliteDatabase':
+                # because of: sqlite3.ProgrammingError: Cannot operate on a closed database.
+                sql, params = self.sql()
+                async with self.database.get_conn() as conn:
+                    cursor = await conn.execute_sql(sql, params, self.require_commit)
+                    row = await cursor.fetchone()
+            else:
+                cursor = await self._execute()
+                row = await cursor.fetchone()
         if row and not as_tuple:
             return row[0]
         else:
@@ -127,8 +134,15 @@ class AioSelectQuery(AioQuery, SelectQuery):
             model_class = self.model_class
             query_meta = self.get_query_meta()
             ResultWrapper = self._get_result_wrapper()
-            cursor = await self._execute()
-            self._qr = ResultWrapper(model_class, cursor, query_meta)
+            if self.database.__class__.__name__ == 'AioSqliteDatabase':
+                # because of: sqlite3.ProgrammingError: Cannot operate on a closed database.
+                sql, params = self.sql()
+                async with self.database.get_conn() as conn:
+                    cursor = await conn.execute_sql(sql, params, self.require_commit)
+                    self._qr = ResultWrapper(model_class, cursor, query_meta)
+            else:
+                cursor = await self._execute()
+                self._qr = ResultWrapper(model_class, cursor, query_meta)
             self._dirty = False
             return self._qr
         else:
